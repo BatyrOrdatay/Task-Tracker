@@ -7,7 +7,14 @@ const { load, save, withDb } = require('./db');
 
 const PORT = process.env.PORT || 3847;
 const JWT_SECRET = process.env.JWT_SECRET || 'task-tracker-dev-secret-change-me';
-const PUBLIC = path.join(__dirname, 'public');
+// Static files live in the repository root so they can be uploaded to GitHub
+// without creating a public/ directory. Keep this list explicit: the server
+// must never expose source files or data.json.
+const STATIC_FILES = new Map([
+  ['/', 'index.html'],
+  ['/index.html', 'index.html'],
+  ['/friends.js', 'friends.js'],
+]);
 
 function uuid() { return crypto.randomUUID(); }
 
@@ -121,9 +128,9 @@ function mime(filePath) {
 }
 
 function serveStatic(req, res, pathname) {
-  let filePath = path.join(PUBLIC, pathname === '/' ? 'index.html' : pathname);
-  if (!filePath.startsWith(PUBLIC)) { res.writeHead(403); return res.end('Forbidden'); }
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) filePath = path.join(PUBLIC, 'index.html');
+  const filename = STATIC_FILES.get(pathname);
+  if (!filename) { res.writeHead(404); return res.end('Not found'); }
+  const filePath = path.join(__dirname, filename);
   fs.readFile(filePath, (err, buf) => {
     if (err) { res.writeHead(404); return res.end('Not found'); }
     res.writeHead(200, { 'Content-Type': mime(filePath) });
