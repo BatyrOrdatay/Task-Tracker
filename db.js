@@ -1,7 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'data.json');
+// Railway exposes the mount path of an attached Volume at runtime. Store the
+// database there so users, friends, and shared tasks survive redeployments.
+// Locally (or without a Volume) the app continues to use the project folder.
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || __dirname;
+const DB_PATH = path.join(DATA_DIR, 'data.json');
 
 const empty = () => ({
   users: [],
@@ -12,6 +16,7 @@ const empty = () => ({
 
 function load() {
   try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
     if (!fs.existsSync(DB_PATH)) {
       const data = empty();
       fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));

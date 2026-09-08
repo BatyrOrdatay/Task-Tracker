@@ -121,6 +121,73 @@
       </div>`;
   }
 
+  function sharedTaskCardHtml(task, user) {
+    const today = new Date();
+    const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const todayKey = `${monthKey}-${String(today.getDate()).padStart(2, '0')}`;
+    const members = task.members || [];
+    const memberHtml = members.map((member) => {
+      const marks = member.completions || {};
+      const monthMarks = Object.keys(marks).filter((key) => key.startsWith(monthKey) && marks[key]).length;
+      const status = member.doneToday ? 'Выполнил сегодня' : 'Не отметил сегодня';
+      return `<div class="shared-member-progress ${member.doneToday ? 'done' : 'missed'}">
+        <div class="shared-member-name"><span class="shared-status-dot"></span>${escapeHtml(member.user?.name || '?')}</div>
+        <div class="shared-member-meta">${status} · ${monthMarks} отметок за месяц</div>
+      </div>`;
+    }).join('');
+    const myDone = members.find((member) => member.user?.id === user.id)?.doneToday;
+    const color = task.color || '#1e3a5f';
+    return `<article class="shared-task-visual-card" style="--shared-accent:${escapeHtml(color)}">
+      <div class="shared-card-banner"></div>
+      <div class="shared-card-body">
+        ${task.category ? `<span class="card-badge">${escapeHtml(task.category)}</span>` : ''}
+        <h4>${escapeHtml(task.name)}</h4>
+        ${task.description ? `<p>${escapeHtml(task.description)}</p>` : ''}
+        <div class="shared-members-progress">${memberHtml}</div>
+        <button class="btn ${myDone ? 'btn-ghost' : 'btn-primary'} btn-sm" data-action="toggle-shared" data-id="${task.id}">
+          ${myDone ? 'Отменить мою отметку' : 'Отметить выполнение'}
+        </button>
+      </div>
+    </article>`;
+  }
+
+  function openSharedTaskModal(friendId, friendName) {
+    document.getElementById('sharedTaskModal')?.remove();
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="modal-overlay open" id="sharedTaskModal">
+        <div class="modal shared-task-modal" role="dialog" aria-modal="true" aria-labelledby="sharedTaskModalTitle">
+          <h2 id="sharedTaskModalTitle">Общая задача с ${escapeHtml(friendName)}</h2>
+          <p class="settings-desc">Каждый отмечает выполнение отдельно — прогресс виден вам обоим.</p>
+          <form id="sharedTaskForm">
+            <div class="form-group"><label>Название задачи</label><input id="sharedTaskName" maxlength="120" required placeholder="Например: Утренняя зарядка"></div>
+            <div class="form-group"><label>Категория</label><input id="sharedTaskCategory" maxlength="40" placeholder="Например: Спорт, Учёба"></div>
+            <div class="form-group"><label>Описание</label><textarea id="sharedTaskDescription" rows="3" maxlength="400" placeholder="Коротко опишите общую цель"></textarea></div>
+            <div class="form-group"><label>Цвет карточки</label><input id="sharedTaskColor" type="color" value="#1e3a5f"></div>
+            <div class="modal-actions"><button type="button" class="btn btn-ghost" id="cancelSharedTask">Отмена</button><button type="submit" class="btn btn-primary">Создать общую задачу</button></div>
+          </form>
+        </div>
+      </div>`);
+    const close = () => document.getElementById('sharedTaskModal')?.remove();
+    document.getElementById('cancelSharedTask').addEventListener('click', close);
+    document.getElementById('sharedTaskModal').addEventListener('click', (event) => { if (event.target.id === 'sharedTaskModal') close(); });
+    document.getElementById('sharedTaskForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await api('/api/shared-tasks', { method: 'POST', body: {
+          friendId,
+          name: document.getElementById('sharedTaskName').value.trim(),
+          category: document.getElementById('sharedTaskCategory').value.trim(),
+          description: document.getElementById('sharedTaskDescription').value.trim(),
+          color: document.getElementById('sharedTaskColor').value,
+        }});
+        close();
+        toast('Общая задача создана');
+        renderFriends();
+      } catch (error) { toast(error.message); }
+    });
+    document.getElementById('sharedTaskName').focus();
+  }
+
   function friendsPageHtml(user, friendsData, sharedTasks) {
     const friends = friendsData.friends || [];
     const incoming = friendsData.incoming || [];
@@ -199,6 +266,10 @@
             })
             .join('');
 
+    const sharedCardsHtml = sharedTasks.length
+      ? `<div class="shared-tasks-grid">${sharedTasks.map((task) => sharedTaskCardHtml(task, user)).join('')}</div>`
+      : '<p class="settings-desc">Общих задач пока нет</p>';
+
     return `
       <div class="settings-block">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -233,7 +304,7 @@
       <div class="settings-block">
         <h3 class="settings-title">🤝 Общие задачи</h3>
         <p class="settings-desc">У каждого своя отметка на день — видно, кто отметился</p>
-        ${sharedHtml}
+        ${sharedCardsHtml}
       </div>
 
       <div id="friendStatsPanel" style="display:none;" class="settings-block"></div>
@@ -290,6 +361,25 @@
   }
 
   function bindFriendsPage() {
+    document.getElementById('friendsRoot')?.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-action]');
+      if (!button || !['shared-with', 'friend-stats'].includes(button.dataset.action)) return;
+      event.stopImmediatePropagation();
+      if (button.dataset.action === 'shared-with') {
+        openSharedTaskModal(button.dataset.id, button.dataset.name || 'другом');
+        return;
+      }
+      try {
+        const stats = await api('/api/friends/' + button.dataset.id + '/stats');
+        switchView('stats');
+        renderStats();
+        const statsRoot = document.getElementById('statsRoot');
+        const tasks = (stats.tasks || []).map((task) => `<div class="task-stat-item"><div><div class="task-stat-name">${escapeHtml(task.name)}</div><div class="task-stat-meta">Сегодня: вы ${task.iDoneToday ? '✓' : '—'} · ${escapeHtml(stats.friend.name)} ${task.friendDoneToday ? '✓' : '—'}</div></div><div class="task-stat-meta">Ваши отметки: ${task.myTotal} · друга: ${task.friendTotal}</div></div>`).join('') || '<p class="settings-desc">Общих задач пока нет</p>';
+        statsRoot.insertAdjacentHTML('beforeend', `<section id="friendStatsDashboard" class="settings-block friend-stats-dashboard"><div class="stats-block-title">Статистика друга · ${escapeHtml(stats.friend.name)}</div><div class="stats-block-desc">Общих задач: ${stats.sharedCount}. Здесь показан прогресс только по вашим общим задачам.</div>${tasks}</section>`);
+        document.getElementById('friendStatsDashboard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (error) { toast(error.message); }
+    }, true);
+
     document.getElementById('btnLogout')?.addEventListener('click', () => {
       clearSession();
       toast('Вы вышли');
@@ -391,6 +481,25 @@
       background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
     }
     .shared-task-title { font-weight:600; font-size:15px; margin-bottom:4px; }
+    .shared-tasks-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; margin-top:16px; }
+    .shared-task-visual-card { overflow:hidden; border:1px solid color-mix(in srgb, var(--shared-accent) 55%, var(--border)); border-radius:16px; background:var(--bg-card); box-shadow:0 8px 28px rgba(0,0,0,.2); }
+    .shared-card-banner { height:48px; background:linear-gradient(135deg,var(--shared-accent),color-mix(in srgb,var(--shared-accent) 48%,#000)); }
+    .shared-card-body { padding:16px; }
+    .shared-card-body h4 { margin:10px 0 6px; font-size:17px; }
+    .shared-card-body p { margin:0 0 14px; color:var(--text-muted); font-size:13px; }
+    .shared-members-progress { display:grid; gap:8px; margin:14px 0; }
+    .shared-member-progress { padding:9px 10px; border-radius:10px; background:rgba(255,255,255,.04); border-left:3px solid var(--text-muted); }
+    .shared-member-progress.done { border-left-color:var(--green); }
+    .shared-member-progress.missed { border-left-color:var(--red); }
+    .shared-member-name { font-size:13px; font-weight:600; display:flex; align-items:center; gap:7px; }
+    .shared-status-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+    .shared-member-progress.done { color:var(--green); }.shared-member-progress.missed { color:var(--red); }
+    .shared-member-progress .shared-member-meta { color:var(--text-muted); font-size:12px; margin-top:3px; }
+    .shared-task-modal { width:min(520px,calc(100vw - 32px)); }
+    .shared-task-modal h2 { margin-bottom:6px; }
+    .shared-task-modal .form-group { margin-top:14px; }
+    .shared-task-modal input[type="color"] { height:42px; padding:4px; cursor:pointer; }
+    .friend-stats-dashboard { margin-top:22px; border-color:color-mix(in srgb,var(--accent) 45%,var(--border)); }
   `;
   document.head.appendChild(style);
 })();
