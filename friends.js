@@ -147,6 +147,10 @@
         <button class="btn ${myDone ? 'btn-ghost' : 'btn-primary'} btn-sm" data-action="toggle-shared" data-id="${task.id}">
           ${myDone ? 'Отменить мою отметку' : 'Отметить выполнение'}
         </button>
+        <div class="shared-task-actions">
+          <button type="button" class="shared-action-btn mark ${myDone ? 'is-active' : ''}" data-action="mark-shared" data-id="${task.id}" title="Отметить выполнение">✓</button>
+          <button type="button" class="shared-action-btn unmark ${myDone ? '' : 'is-active'}" data-action="unmark-shared" data-id="${task.id}" title="Отменить отметку">×</button>
+        </div>
       </div>
     </article>`;
   }
@@ -438,6 +442,21 @@
           await api('/api/friends/' + id, { method: 'DELETE' });
           toast('Удалено');
           renderFriends();
+        } else if (action === 'mark-shared' || action === 'unmark-shared') {
+          const actions = btn.closest('.shared-task-actions');
+          const isDone = actions.querySelector('.mark').classList.contains('is-active');
+          const wantDone = action === 'mark-shared';
+          if (isDone === wantDone || actions.dataset.saving === 'true') return;
+          actions.dataset.saving = 'true';
+          actions.querySelector('.mark').classList.toggle('is-active', wantDone);
+          actions.querySelector('.unmark').classList.toggle('is-active', !wantDone);
+          try {
+            await api('/api/shared-tasks/' + id + '/toggle', { method: 'POST', body: {} });
+            renderFriends();
+          } catch (err) {
+            toast(err.message);
+            renderFriends();
+          }
         } else if (action === 'toggle-shared') {
           await api('/api/shared-tasks/' + id + '/toggle', { method: 'POST', body: {} });
           toast('Отметка обновлена');
@@ -506,6 +525,13 @@
     .shared-card-body h4 { margin:10px 0 6px; font-size:17px; }
     .shared-card-body p { margin:0 0 14px; color:var(--text-muted); font-size:13px; }
     .shared-members-progress { display:grid; gap:8px; margin:14px 0; }
+    .shared-task-visual-card [data-action="toggle-shared"] { display:none; }
+    .shared-task-actions { display:flex; gap:10px; margin-top:16px; }
+    .shared-action-btn { width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--text-muted); cursor:pointer; font-size:21px; font-weight:700; line-height:1; transition:transform .15s,background .15s,box-shadow .15s,color .15s; }
+    .shared-action-btn:hover:not(:disabled) { transform:scale(1.07); }
+    .shared-action-btn:disabled { opacity:.55; cursor:wait; }
+    .shared-action-btn.mark.is-active { background:var(--green); color:white; border-color:var(--green); box-shadow:0 0 0 3px rgba(0,184,148,.2); }
+    .shared-action-btn.unmark.is-active { background:var(--red); color:white; border-color:var(--red); box-shadow:0 0 0 3px rgba(225,112,85,.2); }
     .shared-member-progress { padding:9px 10px; border-radius:10px; background:rgba(255,255,255,.04); border-left:3px solid var(--text-muted); }
     .shared-member-progress.done { border-left-color:var(--green); }
     .shared-member-progress.missed { border-left-color:var(--red); }
