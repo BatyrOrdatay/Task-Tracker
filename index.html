@@ -440,7 +440,7 @@
       right: 100%;
       bottom: auto;
       top: 50%;
-      transform: translateY(-50%);
+      transform: translateY(-50%) translateX(26px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -451,23 +451,28 @@
       box-sizing: border-box;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.15s ease;
+      transition: opacity 0.26s ease, transform 0.3s cubic-bezier(.18,.82,.22,1);
       z-index: 1001;
     }
 
     .task-card:hover .card-hover-rail {
       opacity: 1;
       pointer-events: auto;
+      transform: translateY(-50%) translateX(0);
     }
 
     .card-hover-rail.is-floating {
       position: fixed;
       right: auto;
       bottom: auto;
-      transform: translateY(-50%);
+      transform: translateY(-50%) translateX(26px);
+      z-index: 9999;
+    }
+
+    .card-hover-rail.is-floating.is-visible {
       opacity: 1;
       pointer-events: auto;
-      z-index: 9999;
+      transform: translateY(-50%) translateX(0);
     }
 
     @media (max-width: 640px) {
@@ -493,8 +498,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s, box-shadow 0.15s;
+      opacity: 0;
+      transform: translateX(10px) scale(.78);
+      transition: opacity 0.18s ease, transform 0.24s cubic-bezier(.2,.9,.25,1.25), box-shadow 0.15s;
       flex-shrink: 0;
+    }
+
+    .task-card:hover .rail-btn,
+    .card-hover-rail.is-floating.is-visible .rail-btn {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+
+    .task-card:hover .rail-btn.unmark,
+    .card-hover-rail.is-floating.is-visible .rail-btn.unmark {
+      transition-delay: 0.06s;
     }
 
     .rail-btn:hover {
@@ -2466,12 +2484,13 @@
 
     let floatingRail = null;
     let floatingRailHideTimer = null;
+    let keepFloatingRailTaskId = null;
 
     function hideFloatingRail() {
       if (!floatingRail) return;
       const { rail, card } = floatingRail;
       clearTimeout(floatingRailHideTimer);
-      rail.classList.remove('is-floating');
+      rail.classList.remove('is-floating', 'is-visible');
       rail.style.left = '';
       rail.style.top = '';
       card.appendChild(rail);
@@ -2489,6 +2508,9 @@
       rail.style.left = (rect.left - rail.offsetWidth) + 'px';
       rail.style.top = (rect.top + rect.height / 2) + 'px';
       floatingRail = { rail, card };
+      requestAnimationFrame(() => {
+        if (floatingRail?.rail === rail) rail.classList.add('is-visible');
+      });
     }
 
     function scheduleFloatingRailHide() {
@@ -2497,7 +2519,12 @@
     }
 
     function renderTasks() {
-      hideFloatingRail();
+      const preservedRail = keepFloatingRailTaskId && floatingRail
+        ? floatingRail
+        : null;
+      const preservedTaskId = keepFloatingRailTaskId;
+      keepFloatingRailTaskId = null;
+      if (!preservedRail) hideFloatingRail();
       const grid = document.getElementById('tasksGrid');
       const empty = document.getElementById('emptyState');
       const today = todayStr();
@@ -2592,6 +2619,19 @@
       }).join('');
 
       initDragAndDrop();
+
+      if (preservedRail) {
+        const refreshedCard = [...grid.querySelectorAll('.task-card')]
+          .find((card) => card.dataset.id === preservedTaskId);
+        if (!refreshedCard) {
+          hideFloatingRail();
+          return;
+        }
+        const rect = refreshedCard.getBoundingClientRect();
+        preservedRail.card = refreshedCard;
+        preservedRail.rail.style.left = (rect.left - preservedRail.rail.offsetWidth) + 'px';
+        preservedRail.rail.style.top = (rect.top + rect.height / 2) + 'px';
+      }
     }
 
     function escapeHtml(str) {
@@ -3022,11 +3062,26 @@
 
     function playSuccessSound() {
       if (!soundsEnabled()) return;
-      const audio = document.getElementById('successSound');
-      if (!audio) return;
       try {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((frequency, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const start = now + index * 0.055;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(frequency, start);
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(0.09, start + 0.018);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.26);
+        });
+        setTimeout(() => ctx.close().catch(() => {}), 700);
       } catch (e) {}
     }
 
@@ -3059,6 +3114,7 @@
       playSuccessSound();
       showToast('Выполнено ✓');
       saveData(data);
+      keepFloatingRailTaskId = taskId;
       renderTasks();
     }
 
@@ -3078,6 +3134,7 @@
       playUnmarkSound();
       showToast('Отметка снята');
       saveData(data);
+      keepFloatingRailTaskId = taskId;
       renderTasks();
     }
 
