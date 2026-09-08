@@ -84,7 +84,7 @@ function enrichSharedTask(data, t, viewerId) {
   });
   return {
     id: t.id, name: t.name, description: t.description || '', category: t.category || '',
-    color: t.color || '#1e3a5f', titleColor: t.titleColor || '#f1f5f9', ownerId: t.ownerId, created: t.created,
+    color: t.color || '#1e3a5f', titleColor: t.titleColor || '#f1f5f9', image: t.image || null, ownerId: t.ownerId, created: t.created,
     members, myCompletions: (t.completions && t.completions[viewerId]) || {}
   };
 }
@@ -297,7 +297,7 @@ const server = http.createServer(async (req, res) => {
       try {
         const task = withDb(data => {
           if (!areFriends(data, user.id, friendId)) throw new Error('NOT_FRIEND');
-          const t = { id: uuid(), name, description: String(body.description || '').trim(), category: String(body.category || '').trim(), color: body.color || '#1e3a5f', titleColor: body.titleColor || '#f1f5f9', ownerId: user.id, memberIds: [friendId], completions: {}, created: todayStr(), archived: false };
+          const t = { id: uuid(), name, description: String(body.description || '').trim(), category: String(body.category || '').trim(), color: body.color || '#1e3a5f', titleColor: body.titleColor || '#f1f5f9', image: body.image || null, ownerId: user.id, memberIds: [friendId], completions: {}, created: todayStr(), archived: false };
           data.sharedTasks.push(t);
           return t;
         });

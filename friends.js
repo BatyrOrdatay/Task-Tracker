@@ -151,6 +151,24 @@
     </article>`;
   }
 
+  function openSharedTaskModalV2(friendId, friendName) {
+    const colors = ['#1e3a5f','#0f2747','#263238','#1e1e1e','#4a2c2a','#3d2115','#164b36','#0b362b','#0d4b50','#1e293b','#292060','#3b1488','#500c0c','#6b1023','#35203b','#30361b'];
+    const titleColors = ['#f1f5f9','#60a5fa','#34d399','#fbbf24','#f472b6','#a78bfa','#fb7185','#2dd4bf','#fb923c','#38bdf8','#a3e635','#c084fc'];
+    let color = colors[0], titleColor = titleColors[0], image = '';
+    const options = (items, selected, kind) => items.map((value) => `<button type="button" class="color-option ${value === selected ? 'selected' : ''}" data-${kind}="${value}" style="background:${value}"></button>`).join('');
+    document.getElementById('sharedTaskModal')?.remove();
+    document.body.insertAdjacentHTML('beforeend', `<div class="modal-overlay open" id="sharedTaskModal"><div class="modal" role="dialog" aria-modal="true"><h2>Новая общая задача</h2><div class="form-group"><label>Фото задачи</label><div class="avatar-upload"><div class="avatar-preview" id="sharedAvatarPreview">?</div><div class="avatar-actions"><button type="button" class="btn btn-ghost" id="sharedUploadPhoto">Загрузить фото</button><input type="file" id="sharedPhotoInput" accept="image/*" hidden></div></div></div><form id="sharedTaskForm"><div class="form-group"><label>Название задачи</label><input id="sharedTaskName" maxlength="120" required placeholder="Например: Утренняя зарядка"></div><div class="form-group"><label>Тема</label><input id="sharedTaskCategory" maxlength="40" placeholder="Например: Дом, Работа, Спорт"></div><div class="form-group"><label>Описание (необязательно)</label><textarea id="sharedTaskDescription" rows="2" maxlength="400" placeholder="Краткое описание или заметка"></textarea></div><div class="form-group"><label>Цвет карточки</label><div class="color-grid" id="sharedColorGrid">${options(colors,color,'color')}</div></div><div class="form-group"><label>Цвет названия</label><div class="color-grid" id="sharedTitleColorGrid">${options(titleColors,titleColor,'title-color')}</div></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="cancelSharedTask">Отмена</button><button type="submit" class="btn btn-primary">Сохранить</button></div></form></div></div>`);
+    const modal = document.getElementById('sharedTaskModal'), close = () => modal.remove();
+    modal.querySelector('#cancelSharedTask').onclick = close;
+    modal.onclick = (event) => { if (event.target === modal) close(); };
+    modal.querySelector('#sharedColorGrid').onclick = (event) => { const el = event.target.closest('[data-color]'); if (!el) return; color = el.dataset.color; modal.querySelectorAll('[data-color]').forEach(x => x.classList.toggle('selected', x === el)); };
+    modal.querySelector('#sharedTitleColorGrid').onclick = (event) => { const el = event.target.closest('[data-title-color]'); if (!el) return; titleColor = el.dataset.titleColor; modal.querySelectorAll('[data-title-color]').forEach(x => x.classList.toggle('selected', x === el)); };
+    modal.querySelector('#sharedUploadPhoto').onclick = () => modal.querySelector('#sharedPhotoInput').click();
+    modal.querySelector('#sharedPhotoInput').onchange = (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { image = reader.result; modal.querySelector('#sharedAvatarPreview').innerHTML = `<img src="${image}" alt="">`; }; reader.readAsDataURL(file); };
+    modal.querySelector('#sharedTaskForm').onsubmit = async (event) => { event.preventDefault(); try { await api('/api/shared-tasks', { method:'POST', body:{ friendId, name:modal.querySelector('#sharedTaskName').value.trim(), category:modal.querySelector('#sharedTaskCategory').value.trim(), description:modal.querySelector('#sharedTaskDescription').value.trim(), color, titleColor, image } }); close(); toast('Общая задача создана'); renderFriends(); } catch (error) { toast(error.message); } };
+    modal.querySelector('#sharedTaskName').focus();
+  }
+
   function openSharedTaskModal(friendId, friendName) {
     document.getElementById('sharedTaskModal')?.remove();
     document.body.insertAdjacentHTML('beforeend', `
@@ -366,7 +384,7 @@
       if (!button || !['shared-with', 'friend-stats'].includes(button.dataset.action)) return;
       event.stopImmediatePropagation();
       if (button.dataset.action === 'shared-with') {
-        openSharedTaskModal(button.dataset.id, button.dataset.name || 'другом');
+        openSharedTaskModalV2(button.dataset.id, button.dataset.name || 'другом');
         return;
       }
       try {
