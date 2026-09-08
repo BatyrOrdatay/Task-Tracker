@@ -83,6 +83,57 @@
       --accent-hover: #34d399;
     }
 
+    [data-theme="dark-brown"] {
+      --bg: #17100c;
+      --bg-sidebar: #21150f;
+      --bg-card: #2b1c14;
+      --bg-card-hover: #39251a;
+      --border: #4a3021;
+      --text: #f5e6d3;
+      --text-muted: #c7a98b;
+      --accent: #c2763c;
+      --accent-hover: #df9356;
+    }
+
+    [data-theme="beige"] {
+      --bg: #eee3d2;
+      --bg-sidebar: #e2d0b8;
+      --bg-card: #f8f0e4;
+      --bg-card-hover: #fff8ed;
+      --border: #d3bfa3;
+      --text: #3e2b20;
+      --text-muted: #7d6251;
+      --accent: #a75d31;
+      --accent-hover: #c97845;
+      --green: #3f7d59;
+      --red: #b85343;
+      --shadow: 0 4px 24px rgba(72, 45, 27, 0.12);
+    }
+
+    [data-theme="midnight"] {
+      --bg: #080b18;
+      --bg-sidebar: #10142a;
+      --bg-card: #151a35;
+      --bg-card-hover: #20264a;
+      --border: #2c3560;
+      --text: #e8edff;
+      --text-muted: #9da9d7;
+      --accent: #7088ff;
+      --accent-hover: #98a9ff;
+    }
+
+    [data-theme="rose"] {
+      --bg: #1b0b13;
+      --bg-sidebar: #260f1c;
+      --bg-card: #321421;
+      --bg-card-hover: #451d2e;
+      --border: #5b293d;
+      --text: #ffe8f0;
+      --text-muted: #e6a1ba;
+      --accent: #e45b8f;
+      --accent-hover: #f07da7;
+    }
+
     [data-theme="light"] {
       --bg: #f4f5f7;
       --bg-sidebar: #ffffff;
@@ -2092,6 +2143,10 @@
     // ========== Colors ==========
     
     const THEMES = [
+      { id: 'dark-brown', name: 'Тёмно-коричневая', colors: ['#17100c', '#2b1c14', '#c2763c'] },
+      { id: 'beige', name: 'Бежевая', colors: ['#eee3d2', '#f8f0e4', '#a75d31'] },
+      { id: 'midnight', name: 'Полночная', colors: ['#080b18', '#151a35', '#7088ff'] },
+      { id: 'rose', name: 'Тёмно-розовая', colors: ['#1b0b13', '#321421', '#e45b8f'] },
       { id: 'black',       name: 'Чёрная',        colors: ['#000000', '#111111', '#2563eb'] },
       { id: 'dark-blue',   name: 'Тёмно-синяя',   colors: ['#0b1120', '#111827', '#3b82f6'] },
       { id: 'dark-gray',   name: 'Тёмно-серая',   colors: ['#121212', '#1e1e1e', '#737373'] },
@@ -2201,6 +2256,15 @@
     ];
 
     const TITLE_COLORS = [
+      { name: 'Кремовый', value: '#fdecc8' },
+      { name: 'Золотой', value: '#f59e0b' },
+      { name: 'Бордовый', value: '#d24b5a' },
+      { name: 'Красный', value: '#ef4444' },
+      { name: 'Мятный', value: '#6ee7b7' },
+      { name: 'Изумрудный', value: '#10b981' },
+      { name: 'Бирюзово-синий', value: '#06b6d4' },
+      { name: 'Индиго', value: '#818cf8' },
+      { name: 'Серебряный', value: '#cbd5e1' },
       { name: 'Белый', value: '#f1f5f9' },
       { name: 'Голубой', value: '#60a5fa' },
       { name: 'Зелёный', value: '#34d399' },

@@ -157,7 +157,7 @@
 
   function openSharedTaskModalV2(friendId, friendName) {
     const colors = ['#1e3a5f','#0f2747','#263238','#1e1e1e','#4a2c2a','#3d2115','#164b36','#0b362b','#0d4b50','#1e293b','#292060','#3b1488','#500c0c','#6b1023','#35203b','#30361b'];
-    const titleColors = ['#f1f5f9','#60a5fa','#34d399','#fbbf24','#f472b6','#a78bfa','#fb7185','#2dd4bf','#fb923c','#38bdf8','#a3e635','#c084fc'];
+    const titleColors = ['#f1f5f9','#60a5fa','#34d399','#fbbf24','#f472b6','#a78bfa','#fb7185','#2dd4bf','#fb923c','#38bdf8','#a3e635','#c084fc','#fdecc8','#f59e0b','#d24b5a','#ef4444','#6ee7b7','#10b981','#06b6d4','#818cf8','#cbd5e1'];
     let color = colors[0], titleColor = titleColors[0], image = '';
     const options = (items, selected, kind) => items.map((value) => `<button type="button" class="color-option ${value === selected ? 'selected' : ''}" data-${kind}="${value}" style="background:${value}"></button>`).join('');
     document.getElementById('sharedTaskModal')?.remove();
