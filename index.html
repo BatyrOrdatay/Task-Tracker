@@ -399,6 +399,12 @@
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
     }
 
+    [data-theme="beige"] .task-card {
+      background: rgba(255, 248, 237, 0.86);
+      border-color: rgba(97, 64, 40, 0.16);
+      box-shadow: 0 8px 28px rgba(72, 45, 27, 0.12);
+    }
+
     .task-card:hover {
       border-color: rgba(255, 255, 255, 0.18);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
@@ -409,6 +415,11 @@
     [data-theme="light"] .task-card:hover {
       border-color: rgba(0, 0, 0, 0.12);
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+    }
+
+    [data-theme="beige"] .task-card:hover {
+      border-color: rgba(97, 64, 40, 0.28);
+      box-shadow: 0 12px 36px rgba(72, 45, 27, 0.18);
     }
 
     .task-card.done-today {
@@ -534,6 +545,10 @@
 
     [data-theme="light"] .card-body {
       background: rgba(255, 255, 255, 0.78);
+    }
+
+    [data-theme="beige"] .card-body {
+      background: rgba(255, 248, 237, 0.92);
     }
 
     .card-top-row {
@@ -682,6 +697,12 @@
       border-color: color-mix(in srgb, var(--title-color, #64748b) 55%, #334155);
     }
 
+    [data-theme="beige"] .card-title {
+      background: color-mix(in srgb, var(--title-color, #7d6251) 12%, #fff8ed);
+      color: color-mix(in srgb, var(--title-color, #7d6251) 62%, #3e2b20);
+      border-color: color-mix(in srgb, var(--title-color, #7d6251) 52%, #7d6251);
+    }
+
     .card-desc {
       font-size: 12px;
       color: var(--text-muted);
@@ -708,6 +729,8 @@
     [data-theme="light"] .card-progress-bar {
       background: rgba(0,0,0,0.08);
     }
+
+    [data-theme="beige"] .card-progress-bar { background: rgba(97, 64, 40, 0.12); }
 
     .card-progress-fill {
       height: 100%;
@@ -743,6 +766,8 @@
     [data-theme="light"] .card-footer {
       border-top-color: rgba(0,0,0,0.06);
     }
+
+    [data-theme="beige"] .card-footer { border-top-color: rgba(97, 64, 40, 0.1); }
 
     .card-date {
       display: flex;
