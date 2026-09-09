@@ -1117,8 +1117,11 @@
     }
 
     .cal-day.future {
-      opacity: 0.4;
-      cursor: default;
+      opacity: 0.55;
+      cursor: pointer;
+    }
+    .cal-day.future.done {
+      opacity: 1;
     }
 
     .cal-day.today {
@@ -1138,7 +1141,7 @@
       font-weight: 600;
     }
 
-    .cal-day:not(.other-month):not(.future):hover {
+    .cal-day:not(.other-month):hover {
       background: rgba(255,255,255,0.08);
     }
 
@@ -3560,14 +3563,17 @@
     }
 
     function toggleDay(dateStr) {
-      if (dateStr > todayStr()) return;
       const task = data.tasks.find(t => t.id === calTaskId);
       if (!task) return;
 
       if (task.completions[dateStr]) {
         delete task.completions[dateStr];
+        playUnmarkSound();
+        showToast('Отметка снята');
       } else {
         task.completions[dateStr] = true;
+        playSuccessSound();
+        showToast('Выполнено ✓');
       }
       saveData(data);
       renderCalendar();
@@ -3651,7 +3657,7 @@
 
     document.getElementById('calDays').addEventListener('click', e => {
       const day = e.target.closest('.cal-day');
-      if (!day || day.classList.contains('other-month') || day.classList.contains('future')) return;
+      if (!day || day.classList.contains('other-month')) return;
       const dateStr = day.dataset.date;
       if (dateStr) {
         toggleDay(dateStr);
