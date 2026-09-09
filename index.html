@@ -1924,15 +1924,6 @@
       Архив задач
     </div>
 
-    <div class="nav-item" data-view="friends" id="navFriends">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-        <path d="M16 3.13a4 4 0 010 7.75"/>
-      </svg>
-      Друзья
-    </div>
 
     <div class="sidebar-footer">
       <div class="nav-item" data-view="settings" id="navSettings">
@@ -2004,9 +1995,6 @@
       </div>
     </div>
 
-    <div class="content" id="viewFriends" style="display:none;">
-      <div class="settings-section" id="friendsRoot"></div>
-    </div>
 
     <div class="content" id="viewSettings" style="display:none;">
       <div class="settings-section">
@@ -2229,7 +2217,7 @@
     }
 
     function switchView(view) {
-      const views = ['tasks', 'stats', 'archive', 'friends', 'settings'];
+      const views = ['tasks', 'stats', 'archive', 'settings'];
       views.forEach(v => {
         const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
         if (el) el.style.display = v === view ? 'block' : 'none';
@@ -2257,11 +2245,6 @@
         headerDesc.textContent = 'Скрытые задачи — история сохраняется';
         btnAdd.style.display = 'none';
         renderArchive();
-      } else if (view === 'friends') {
-        headerTitle.textContent = 'Друзья';
-        headerDesc.textContent = 'Друзья, заявки и общие задачи';
-        btnAdd.style.display = 'none';
-        if (typeof renderFriends === 'function') renderFriends();
       } else {
         headerTitle.textContent = 'Настройки';
         headerDesc.textContent = 'Тема, уведомления и данные';
@@ -3748,7 +3731,6 @@
     document.getElementById('navTasks').addEventListener('click', () => switchView('tasks'));
     document.getElementById('navStats')?.addEventListener('click', () => switchView('stats'));
     document.getElementById('navArchive')?.addEventListener('click', () => switchView('archive'));
-    document.getElementById('navFriends')?.addEventListener('click', () => switchView('friends'));
     document.getElementById('navSettings').addEventListener('click', () => switchView('settings'));
 
     // Export / Import
@@ -3854,6 +3836,5 @@
     }
     updateNotifStatus();
   </script>
-<script src="/friends.js"></script>
 </body>
 </html>
