@@ -1,9 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-// Railway exposes the mount path of an attached Volume at runtime. Store the
-// database there so users, friends, and shared tasks survive redeployments.
-// Locally (or without a Volume) the app continues to use the project folder.
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR || __dirname;
 const DB_PATH = path.join(DATA_DIR, 'data.json');
 
@@ -12,6 +9,7 @@ const empty = () => ({
   friendRequests: [],
   friendships: [],
   sharedTasks: [],
+  userStores: {},
 });
 
 function load() {
@@ -22,7 +20,13 @@ function load() {
       fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
       return data;
     }
-    return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+    const parsed = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+    if (!parsed.userStores) parsed.userStores = {};
+    if (!parsed.users) parsed.users = [];
+    if (!parsed.friendRequests) parsed.friendRequests = [];
+    if (!parsed.friendships) parsed.friendships = [];
+    if (!parsed.sharedTasks) parsed.sharedTasks = [];
+    return parsed;
   } catch {
     return empty();
   }

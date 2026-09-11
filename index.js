@@ -13,7 +13,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'task-tracker-dev-secret-change-me'
 const STATIC_FILES = new Map([
   ['/', 'index.html'],
   ['/index.html', 'index.html'],
-  ['/friends.js', 'friends.js'],
+  ['/manifest.webmanifest', 'manifest.webmanifest'],
+  ['/sw.js', 'sw.js'],
+  ['/icon-192.png', 'icon-192.png'],
+  ['/icon-512.png', 'icon-512.png'],
 ]);
 
 function uuid() { return crypto.randomUUID(); }
@@ -331,6 +334,35 @@ const server = http.createServer(async (req, res) => {
         if (e.message === 'FORBIDDEN') return send(res, 403, { error: 'Нет доступа' });
         throw e;
       }
+    }
+
+
+    // --- User data sync (tasks, notes, settings) ---
+    if (req.method === 'GET' && p === '/api/data') {
+      const user = getUser(req);
+      if (!user) return send(res, 401, { error: 'Нужен вход' });
+      const data = load();
+      const store = (data.userStores && data.userStores[user.id]) || {
+        tasks: [], notes: [], settings: {}, updatedAt: null
+      };
+      return send(res, 200, { store, user: publicUser(user) });
+    }
+
+    if (req.method === 'PUT' && p === '/api/data') {
+      const user = getUser(req);
+      if (!user) return send(res, 401, { error: 'Нужен вход' });
+      const body = await readBody(req);
+      const store = {
+        tasks: Array.isArray(body.tasks) ? body.tasks : [],
+        notes: Array.isArray(body.notes) ? body.notes : [],
+        settings: body.settings && typeof body.settings === 'object' ? body.settings : {},
+        updatedAt: new Date().toISOString()
+      };
+      withDb(data => {
+        if (!data.userStores) data.userStores = {};
+        data.userStores[user.id] = store;
+      });
+      return send(res, 200, { ok: true, updatedAt: store.updatedAt });
     }
 
     if (req.method === 'GET' && !p.startsWith('/api')) return serveStatic(req, res, p);

@@ -2,9 +2,17 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
   <title>Task Tracker</title>
   <meta name="google-site-verification" content="rnRpXj5pT2qpdo5a0dJrQSPbkn3P8OuoZ1bnwcAsOjQ" />
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Task Tracker">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/png" href="/icon-192.png">
   <style>
     :root, [data-theme="black"] {
       --bg: #000000;
@@ -2274,19 +2282,162 @@
       color: var(--text);
     }
 
-    /* Responsive */
-    @media (max-width: 700px) {
+    /* Responsive + Mobile */
+    .mobile-nav {
+      display: none;
+    }
+    .mobile-topbar {
+      display: none;
+    }
+
+    @media (max-width: 800px) {
+      body {
+        flex-direction: column;
+      }
       .sidebar {
+        display: none !important;
+      }
+      .mobile-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .mobile-topbar-title {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .mobile-topbar-sub {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .main {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      }
+      .header {
         display: none;
       }
-      .header, .content {
-        padding-left: 18px;
-        padding-right: 18px;
+      .content {
+        padding: 14px 14px 24px;
       }
+      .mobile-nav {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 100;
+        background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid var(--border);
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        justify-content: space-around;
+        gap: 4px;
+      }
+      .mobile-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 8px 4px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 10px;
+        font-family: inherit;
+        cursor: pointer;
+        border-radius: 10px;
+      }
+      .mobile-nav-item svg {
+        width: 22px;
+        height: 22px;
+      }
+      .mobile-nav-item.active {
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+      }
+      .tasks-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 4px 0 24px;
+      }
+      .notes-layout {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+        min-height: 0;
+      }
+      .notes-list-panel {
+        max-height: 40vh;
+      }
+      .notes-editor-panel {
+        min-height: 50vh;
+      }
+      .search-bar {
+        flex-wrap: wrap;
+      }
+      .search-field {
+        max-width: none;
+        flex: 1 1 100%;
+      }
+      .daily-goal {
+        flex-wrap: wrap;
+      }
+      .card-hover-rail {
+        display: none !important;
+      }
+      .task-card {
+        overflow: hidden;
+      }
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+      .theme-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .modal {
+        width: 94%;
+        max-height: 85vh;
+      }
+      .btn-primary, .header .btn {
+        width: auto;
+      }
+    }
+
+    @media (min-width: 801px) {
+      .mobile-nav, .mobile-topbar { display: none !important; }
+    }
+
+    .auth-forms .form-group { margin-bottom: 12px; }
+    .auth-user-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sync-status {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
+  <div class="mobile-topbar">
+    <div>
+      <div class="mobile-topbar-title" id="mobileTitle">Задачи</div>
+      <div class="mobile-topbar-sub" id="mobileSub">Task Tracker</div>
+    </div>
+    <button class="btn btn-primary" id="btnAddTaskMobile" style="padding:8px 12px; font-size:13px;">+ Задача</button>
+  </div>
   <aside class="sidebar">
     <div class="logo">
       <div class="logo-icon">✓</div>
@@ -2445,6 +2596,39 @@
 
     <div class="content" id="viewSettings" style="display:none;">
       <div class="settings-section">
+
+        <div class="settings-block" id="authBlock">
+          <h3 class="settings-title">Аккаунт</h3>
+          <p class="settings-desc">Войди, чтобы синхронизировать задачи и заметки между телефоном и компьютером</p>
+          <div id="authLoggedOut">
+            <div class="auth-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+              <button type="button" class="btn btn-ghost auth-tab active" data-auth-tab="login">Вход</button>
+              <button type="button" class="btn btn-ghost auth-tab" data-auth-tab="register">Регистрация</button>
+            </div>
+            <form id="authLoginForm" class="auth-forms">
+              <div class="form-group"><label>Email</label><input type="email" id="loginEmail" required placeholder="you@email.com" autocomplete="email"></div>
+              <div class="form-group"><label>Пароль</label><input type="password" id="loginPassword" required minlength="6" autocomplete="current-password"></div>
+              <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Войти</button>
+            </form>
+            <form id="authRegisterForm" class="auth-forms" style="display:none;">
+              <div class="form-group"><label>Имя</label><input type="text" id="regName" maxlength="40" placeholder="Как тебя зовут"></div>
+              <div class="form-group"><label>Email</label><input type="email" id="regEmail" required placeholder="you@email.com" autocomplete="email"></div>
+              <div class="form-group"><label>Пароль</label><input type="password" id="regPassword" required minlength="6" placeholder="Минимум 6 символов" autocomplete="new-password"></div>
+              <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Создать аккаунт</button>
+            </form>
+          </div>
+          <div id="authLoggedIn" style="display:none;">
+            <div class="auth-user-row">
+              <div>
+                <div style="font-weight:600;" id="authUserName">—</div>
+                <div style="font-size:12px;color:var(--text-muted);" id="authUserEmail">—</div>
+              </div>
+              <button type="button" class="btn btn-ghost" id="btnLogout">Выйти</button>
+            </div>
+            <div class="sync-status" id="syncStatus">Синхронизация: —</div>
+            <button type="button" class="btn btn-ghost" id="btnSyncNow" style="margin-top:10px;">Синхронизировать сейчас</button>
+          </div>
+        </div>
 
         <div class="settings-block">
           <h3 class="settings-title">Тема оформления</h3>
@@ -2688,7 +2872,28 @@
       `).join('');
     }
 
+    function updateMobileChrome(view) {
+      const titles = {
+        tasks: ['Задачи', 'Ежедневный трекер'],
+        stats: ['Статистика', 'Прогресс'],
+        notes: ['Заметки', 'Идеи и записи'],
+        settings: ['Настройки', 'Аккаунт и оформление'],
+      };
+      const t = titles[view] || titles.tasks;
+      const mt = document.getElementById('mobileTitle');
+      const ms = document.getElementById('mobileSub');
+      if (mt) mt.textContent = t[0];
+      if (ms) ms.textContent = t[1];
+      document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+      const addBtn = document.getElementById('btnAddTaskMobile');
+      if (addBtn) addBtn.style.display = view === 'tasks' ? 'inline-flex' : 'none';
+    }
+
     function switchView(view) {
+      updateMobileChrome(view);
+
       const views = ['tasks', 'stats', 'notes', 'settings'];
       views.forEach(v => {
         const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
@@ -2849,6 +3054,140 @@
     let photoTargetTaskId = null; // for upload from card avatar
 
     // ========== Toast ==========
+
+
+    // ========== Auth + Cloud Sync ==========
+    const TOKEN_KEY = 'tt_auth_token';
+    const USER_KEY = 'tt_auth_user';
+    let authUser = null;
+    let syncTimer = null;
+    try { authUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { authUser = null; }
+
+    function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+
+    function setAuthSession(token, user) {
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      authUser = user;
+      renderAuthUI();
+    }
+
+    function clearAuthSession() {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      authUser = null;
+      renderAuthUI();
+    }
+
+    async function api(path, options = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+      const token = getToken();
+      if (token) headers.Authorization = 'Bearer ' + token;
+      const res = await fetch(path, {
+        ...options,
+        headers,
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(data.error || 'Ошибка запроса');
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    function renderAuthUI() {
+      const out = document.getElementById('authLoggedOut');
+      const inn = document.getElementById('authLoggedIn');
+      if (!out || !inn) return;
+      if (authUser && getToken()) {
+        out.style.display = 'none';
+        inn.style.display = 'block';
+        document.getElementById('authUserName').textContent = authUser.name || 'Пользователь';
+        document.getElementById('authUserEmail').textContent = authUser.email || '';
+      } else {
+        out.style.display = 'block';
+        inn.style.display = 'none';
+      }
+    }
+
+    function setSyncStatus(text) {
+      const el = document.getElementById('syncStatus');
+      if (el) el.textContent = text;
+    }
+
+    async function pullCloudData() {
+      if (!getToken()) return;
+      setSyncStatus('Загрузка с сервера…');
+      try {
+        const res = await api('/api/data');
+        const store = res.store || {};
+        const serverTasks = Array.isArray(store.tasks) ? store.tasks : [];
+        const serverNotes = Array.isArray(store.notes) ? store.notes : [];
+        const localEmpty = (!data.tasks || data.tasks.length === 0) && (!data.notes || data.notes.length === 0);
+        const serverEmpty = serverTasks.length === 0 && serverNotes.length === 0;
+
+        if (!serverEmpty) {
+          // Server has data → use it
+          data.tasks = serverTasks;
+          data.notes = serverNotes;
+          if (store.settings && typeof store.settings === 'object') {
+            data.settings = Object.assign({}, data.settings || {}, store.settings);
+          }
+          saveData(data, true); // local only
+          renderTasks();
+          if (typeof renderNotes === 'function') renderNotes();
+          if (typeof updateTrashBadges === 'function') updateTrashBadges();
+          setSyncStatus('Синхронизировано: ' + new Date().toLocaleTimeString('ru-RU'));
+        } else if (!localEmpty) {
+          // Upload local to empty server
+          await pushCloudData();
+        } else {
+          setSyncStatus('Облако пустое — создай задачи');
+        }
+        if (res.user) {
+          authUser = res.user;
+          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          renderAuthUI();
+        }
+      } catch (e) {
+        setSyncStatus('Ошибка: ' + e.message);
+        if (e.status === 401) clearAuthSession();
+      }
+    }
+
+    async function pushCloudData() {
+      if (!getToken()) return;
+      try {
+        setSyncStatus('Сохранение в облако…');
+        await api('/api/data', {
+          method: 'PUT',
+          body: {
+            tasks: data.tasks || [],
+            notes: data.notes || [],
+            settings: data.settings || {},
+          },
+        });
+        setSyncStatus('Синхронизировано: ' + new Date().toLocaleTimeString('ru-RU'));
+      } catch (e) {
+        setSyncStatus('Не удалось сохранить: ' + e.message);
+        if (e.status === 401) clearAuthSession();
+      }
+    }
+
+    function scheduleCloudSync() {
+      if (!getToken()) return;
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => { pushCloudData(); }, 800);
+    }
+
+    // Patch saveData to also sync
+    const _saveDataOriginal = saveData;
+    saveData = function(d, localOnly) {
+      _saveDataOriginal(d);
+      if (!localOnly) scheduleCloudSync();
+    };
 
     function showConfirm({ title = 'Подтвердите действие', message = '', confirmText = 'OK', cancelText = 'Отмена', danger = false } = {}) {
       return new Promise(resolve => {
@@ -4764,6 +5103,78 @@
       });
     } catch(e) {}
 
+
+    // Auth UI
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const isLogin = tab.dataset.authTab === 'login';
+        const lf = document.getElementById('authLoginForm');
+        const rf = document.getElementById('authRegisterForm');
+        if (lf) lf.style.display = isLogin ? 'block' : 'none';
+        if (rf) rf.style.display = isLogin ? 'none' : 'block';
+      });
+    });
+    document.getElementById('authLoginForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await api('/api/login', {
+          method: 'POST',
+          body: {
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value,
+          },
+        });
+        setAuthSession(res.token, res.user);
+        showToast('Вход выполнен');
+        await pullCloudData();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+    document.getElementById('authRegisterForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await api('/api/register', {
+          method: 'POST',
+          body: {
+            name: document.getElementById('regName').value,
+            email: document.getElementById('regEmail').value,
+            password: document.getElementById('regPassword').value,
+          },
+        });
+        setAuthSession(res.token, res.user);
+        showToast('Аккаунт создан');
+        await pullCloudData();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+    document.getElementById('btnLogout')?.addEventListener('click', () => {
+      clearAuthSession();
+      setSyncStatus('Вы вышли');
+      showToast('Вы вышли');
+    });
+    document.getElementById('btnSyncNow')?.addEventListener('click', async () => {
+      await pushCloudData();
+      await pullCloudData();
+    });
+
+    // Mobile nav
+    document.getElementById('mobileNav')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-view]');
+      if (btn) switchView(btn.dataset.view);
+    });
+    document.getElementById('btnAddTaskMobile')?.addEventListener('click', () => {
+      if (typeof openAddModal === 'function') openAddModal();
+    });
+
+    // PWA service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
     // Initial
     applyTheme(getSavedTheme());
     if (data.settings && data.settings.themeAuto) applyThemeAuto();
@@ -4775,6 +5186,29 @@
     }
     updateNotifStatus();
     updateTrashBadges();
+    renderAuthUI();
+    if (getToken()) pullCloudData();
+    updateMobileChrome('tasks');
   </script>
+
+  <nav class="mobile-nav" id="mobileNav">
+    <button type="button" class="mobile-nav-item active" data-view="tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Задачи
+    </button>
+    <button type="button" class="mobile-nav-item" data-view="stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Стат.
+    </button>
+    <button type="button" class="mobile-nav-item" data-view="notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Заметки
+    </button>
+    <button type="button" class="mobile-nav-item" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Ещё
+    </button>
+  </nav>
+
 </body>
 </html>
