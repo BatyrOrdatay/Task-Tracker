@@ -717,6 +717,8 @@
       background: rgba(0,0,0,0.05);
     }
 
+    .card-menu button[data-action="mark"] { color: var(--green); }
+    .card-menu button[data-action="unmark"] { color: var(--red); }
     .card-menu button.danger {
       color: var(--red);
     }
@@ -2332,7 +2334,10 @@
         left: 0;
         right: 0;
         bottom: 0;
-        z-index: 100;
+        z-index: 10000;
+        pointer-events: auto;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
         background: color-mix(in srgb, var(--bg-card) 92%, transparent);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
@@ -2355,6 +2360,11 @@
         font-family: inherit;
         cursor: pointer;
         border-radius: 10px;
+        pointer-events: auto;
+        -webkit-user-select: none;
+        user-select: none;
+        min-height: 48px;
+        justify-content: center;
       }
       .mobile-nav-item svg {
         width: 22px;
@@ -2829,7 +2839,26 @@
   </audio>
 
 
-  <script>
+  <nav class="mobile-nav" id="mobileNav">
+    <button type="button" class="mobile-nav-item active" data-view="tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Задачи
+    </button>
+    <button type="button" class="mobile-nav-item" data-view="stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Стат.
+    </button>
+    <button type="button" class="mobile-nav-item" data-view="notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Заметки
+    </button>
+    <button type="button" class="mobile-nav-item" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Ещё
+    </button>
+  </nav>
+
+<script>
     // ========== Colors ==========
     
     const THEMES = [
@@ -2906,26 +2935,23 @@
       const headerTitle = document.querySelector('.header h1');
       const headerDesc = document.querySelector('.header-desc');
       const btnAdd = document.getElementById('btnAddTask');
+      const setHeader = (t, d) => { if (headerTitle) headerTitle.textContent = t; if (headerDesc) headerDesc.textContent = d; };
 
       if (view === 'tasks') {
-        headerTitle.textContent = 'Задачи';
-        headerDesc.textContent = 'Отмечай выполнение каждый день. Календарь покажет прогресс.';
-        btnAdd.style.display = 'inline-flex';
+        setHeader('Задачи', 'Отмечай выполнение каждый день. Календарь покажет прогресс.');
+        if (btnAdd) btnAdd.style.display = 'inline-flex';
         loadDailyGoal();
       } else if (view === 'stats') {
-        headerTitle.textContent = 'Статистика';
-        headerDesc.textContent = 'Прогресс по активным задачам';
-        btnAdd.style.display = 'none';
+        setHeader('Статистика', 'Прогресс по активным задачам');
+        if (btnAdd) btnAdd.style.display = 'none';
         renderStats();
       } else if (view === 'notes') {
-        headerTitle.textContent = 'Заметки';
-        headerDesc.textContent = 'Идеи, черновики и записи';
-        btnAdd.style.display = 'none';
+        setHeader('Заметки', 'Идеи, черновики и записи');
+        if (btnAdd) btnAdd.style.display = 'none';
         renderNotes();
       } else {
-        headerTitle.textContent = 'Настройки';
-        headerDesc.textContent = 'Тема, уведомления и данные';
-        btnAdd.style.display = 'none';
+        setHeader('Настройки', 'Тема, уведомления и данные');
+        if (btnAdd) btnAdd.style.display = 'none';
         renderThemeGrid();
         updateNotifStatus();
         const t = (data.settings && data.settings.notifTime) || '20:00';
@@ -3436,6 +3462,8 @@
                 <div class="card-menu-wrap">
                   <button type="button" class="card-menu-btn" data-action="menu" data-id="${task.id}" title="Меню">⋯</button>
                   <div class="card-menu">
+                    <button type="button" data-action="mark" data-id="${task.id}">✓ Отметить</button>
+                    <button type="button" data-action="unmark" data-id="${task.id}">✕ Снять отметку</button>
                     <button type="button" data-action="calendar" data-id="${task.id}">Календарь</button>
                     <button type="button" data-action="pin" data-id="${task.id}">${task.pinned ? 'Открепить' : 'Закрепить'}</button>
                     <button type="button" data-action="edit" data-id="${task.id}">Редактировать</button>
@@ -5162,12 +5190,17 @@
     });
 
     // Mobile nav
-    document.getElementById('mobileNav')?.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-view]');
-      if (btn) switchView(btn.dataset.view);
-    });
-    document.getElementById('btnAddTaskMobile')?.addEventListener('click', () => {
-      if (typeof openAddModal === 'function') openAddModal();
+    document.addEventListener('click', (e) => {
+      const mob = e.target.closest('#mobileNav [data-view]');
+      if (mob && mob.dataset.view) {
+        e.preventDefault();
+        switchView(mob.dataset.view);
+        return;
+      }
+      if (e.target.closest('#btnAddTaskMobile')) {
+        e.preventDefault();
+        if (typeof openAddModal === 'function') openAddModal();
+      }
     });
 
     // PWA service worker
@@ -5190,25 +5223,5 @@
     if (getToken()) pullCloudData();
     updateMobileChrome('tasks');
   </script>
-
-  <nav class="mobile-nav" id="mobileNav">
-    <button type="button" class="mobile-nav-item active" data-view="tasks">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      Задачи
-    </button>
-    <button type="button" class="mobile-nav-item" data-view="stats">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      Стат.
-    </button>
-    <button type="button" class="mobile-nav-item" data-view="notes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Заметки
-    </button>
-    <button type="button" class="mobile-nav-item" data-view="settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      Ещё
-    </button>
-  </nav>
-
 </body>
 </html>
